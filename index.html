@@ -393,6 +393,26 @@ p.sub {
   color:var(--gray); letter-spacing:2px; text-transform:uppercase;
   flex-shrink:0;
 }
+.wa-cta {
+  display:inline-flex; align-items:center; gap:10px;
+  margin-top: clamp(26px,4.5vh,44px);
+  padding: 15px 34px;
+  background:var(--gold); color:var(--bg);
+  border:1px solid var(--gold); border-radius:2px;
+  font-family:'DM Sans',sans-serif;
+  font-size: clamp(13px,1.7vw,15px); font-weight:500; letter-spacing:0.5px;
+  text-decoration:none; transition:all 0.25s ease; flex-shrink:0;
+}
+.wa-cta:hover {
+  background:var(--gold-light); border-color:var(--gold-light);
+  transform:translateY(-2px); box-shadow:0 10px 28px rgba(201,168,76,0.28);
+}
+.wa-cta:active { transform:scale(0.97); }
+.wa-num {
+  font-size: clamp(11px,1.5vw,13px);
+  color:var(--gray); letter-spacing:1px;
+  margin-top:14px; flex-shrink:0;
+}
 
 /* ══════════════════════════════════════
    MOBILE  ≤ 640px
@@ -466,7 +486,8 @@ p.sub {
       <span class="badge-name">Rui · Agente de IA</span>
     </div>
     <h1 class="reveal d1">
-      Seu cliente está pronto<br>para comprar.<br>
+      Muitos leads têm tempo livre para comprar<br>
+      no <em>domingo</em> ou <em>fora do horário comercial</em>.<br>
       <em>Alguém está atendendo ele?</em>
     </h1>
     <p class="sub reveal d2">Uma conversa sobre o que está custando sua loja em silêncio.</p>
@@ -484,8 +505,8 @@ p.sub {
       </div>
       <div class="pain-card reveal d3">
         <div class="pain-num">02</div>
-        <div class="pain-title">Ninguém sabe de onde vêm os clientes que realmente compram</div>
-        <div class="pain-desc">Instagram, WhatsApp, site — você investe em todos, mas não sabe qual fecha negócio.</div>
+        <div class="pain-title">Seus vendedores tratam leads quentes e frios igualmente</div>
+        <div class="pain-desc">Um lead pronto pra comprar espera na mesma fila de um curioso. Ele esfria — e compra de quem responder primeiro.</div>
       </div>
       <div class="pain-card reveal d4">
         <div class="pain-num">03</div>
@@ -516,18 +537,18 @@ p.sub {
     <div class="pillars">
       <div class="pillar reveal d2">
         <div class="pillar-icon">⏱</div>
-        <div class="pillar-title">Atende 24h por dia</div>
+        <div class="pillar-title">Atende 24h por dia 7 dias por semana</div>
         <div class="pillar-text">Qualifica cada lead no momento exato em que ele chega — madrugada, feriado, fim de semana.</div>
       </div>
       <div class="pillar reveal d3">
         <div class="pillar-icon">🎯</div>
         <div class="pillar-title">Identifica quem compra</div>
-        <div class="pillar-text">Mostra de qual plataforma vêm os leads que realmente fecham negócio.</div>
+        <div class="pillar-text">Qualifica leads para diferenciar leads quentes dos frios e permitir que a sua equipe os 'esquente'.</div>
       </div>
       <div class="pillar reveal d4">
         <div class="pillar-icon">📊</div>
-        <div class="pillar-title">Expõe quem performa</div>
-        <div class="pillar-text">Ranking de vendedores por velocidade e conversão — sem achismo.</div>
+        <div class="pillar-title">Diagnostica porque leads esfriaram</div>
+        <div class="pillar-text">Aponta a causa exata — preço, falta de estoque ou demora no atendimento.</div>
       </div>
     </div>
   </div>
@@ -576,8 +597,8 @@ p.sub {
           <div class="step-num">4</div>
         </div>
         <div>
-          <div class="step-title">Venda registrada</div>
-          <div class="step-desc">Tudo no dashboard: plataforma, tempo, vendedor, resultado.</div>
+          <div class="step-title">Esquenta leads frios</div>
+          <div class="step-desc">Rui reengaja quem esfriou, com uma nova mensagem no momento certo.</div>
         </div>
       </div>
     </div>
@@ -589,34 +610,29 @@ p.sub {
     <h2 class="reveal d1">Você passa a enxergar<br>o que antes era <em>invisível</em></h2>
     <div class="dash-grid">
       <div class="dash-card reveal d2">
-        <span class="dc-icon">📡</span>
-        <div class="dc-label">Origem do Lead</div>
-        <div class="dc-desc">Qual plataforma gera os leads que realmente fecham.</div>
-      </div>
-      <div class="dash-card reveal d2">
         <span class="dc-icon">🌡</span>
         <div class="dc-label">Temperatura</div>
         <div class="dc-desc">Cada lead classificado por nível de intenção de compra.</div>
       </div>
-      <div class="dash-card reveal d3">
-        <span class="dc-icon">🏆</span>
-        <div class="dc-label">Ranking de Vendedores</div>
-        <div class="dc-desc">Velocidade de resposta cruzada com taxa de conversão.</div>
-      </div>
-      <div class="dash-card reveal d3">
+      <div class="dash-card reveal d2">
         <span class="dc-icon">🕐</span>
         <div class="dc-label">Atendimento 24h</div>
         <div class="dc-desc">Quanto da sua demanda chega fora do horário comercial.</div>
       </div>
-      <div class="dash-card reveal d4">
-        <span class="dc-icon">🔒</span>
-        <div class="dc-label">E muito mais...</div>
-        <div class="dc-blur">Dados que só fazem sentido quando você vê ao vivo.</div>
+      <div class="dash-card reveal d2">
+        <span class="dc-icon">🚗</span>
+        <div class="dc-label">Fila de Espera por Modelo Específico</div>
+        <div class="dc-desc">Quem está esperando por cada modelo, pronto pra acionar quando chegar.</div>
       </div>
-      <div class="dash-card reveal d4" style="border-color:rgba(201,168,76,0.22);background:rgba(201,168,76,0.048);">
+      <div class="dash-card reveal d3" style="border-color:rgba(201,168,76,0.22);background:rgba(201,168,76,0.048);">
         <span class="dc-icon">👁</span>
         <div class="dc-label" style="color:var(--gold-light)">Visibilidade Total</div>
         <div class="dc-desc">Decisões baseadas em dados reais da sua operação.</div>
+      </div>
+      <div class="dash-card reveal d3">
+        <span class="dc-icon">🔒</span>
+        <div class="dc-label">E muito mais...</div>
+        <div class="dc-blur">Dados que só fazem sentido quando você vê ao vivo.</div>
       </div>
     </div>
   </div>
@@ -629,6 +645,10 @@ p.sub {
     </p>
     <div class="cta-line reveal d2"></div>
     <p class="cta-sub reveal d3">Uma demonstração. Sem compromisso.</p>
+    <a class="wa-cta reveal d4" href="https://wa.me/5581995090483" target="_blank" rel="noopener">
+      <span>💬</span> Falar no WhatsApp
+    </a>
+    <p class="wa-num reveal d4">(81) 99509-0483</p>
   </div>
 
 </div><!-- /deck -->
