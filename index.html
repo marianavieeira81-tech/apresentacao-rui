@@ -6,7 +6,7 @@
 <title>Rui — Agente de IA</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -112,6 +112,14 @@ h2 {
   flex-shrink: 0;
 }
 h1 em, h2 em { font-style: italic; color: var(--gold-light); }
+.impact {
+  font-family: 'Archivo Black', 'DM Sans', sans-serif;
+  font-style: normal;
+  text-transform: uppercase;
+  color: var(--gold-light);
+  letter-spacing: 0.01em;
+  font-size: 1.05em;
+}
 
 p.sub {
   font-size: clamp(12px, 1.8vw, 14px);
@@ -487,7 +495,7 @@ p.sub {
     </div>
     <h1 class="reveal d1">
       Muitos leads têm tempo livre para comprar<br>
-      no <em>domingo</em> ou <em>fora do horário comercial</em>.<br>
+      fora do <span class="impact">horário comercial</span>.<br>
       <em>Alguém está atendendo ele?</em>
     </h1>
     <p class="sub reveal d2">Uma conversa sobre o que está custando sua loja em silêncio.</p>
