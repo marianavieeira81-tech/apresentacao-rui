@@ -2,726 +2,407 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Rui — Agente de IA</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rui — Agente de IA para Concessionárias</title>
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  /* ===== Tokens — extraídos do painel real (jbs-rui-dashboard-v2) ===== */
+  :root{
+    --bg:#080808; --surface:#101010; --s2:#181818; --s3:#222; --s4:#2C2C2C;
+    --ac:#D4AF37; --ac-l:#F0DC82; --ac-d:#A88820; --ac-faint:rgba(212,175,55,.09);
+    --tx:#F0F0F0; --tx2:#A0A0A0; --tx3:#666;
+    --grn:#004225; --grn-l:#00A065; --grn-bg:rgba(0,160,101,.12);
+    --red:#E11D48; --red-bg:rgba(225,29,72,.12);
+    --blue:#6090FF;
+    --bdr:#1E1E1E; --r:20px; --rsm:11px; --stripe:3px;
+    --c-premium:#8B7CF0; --c-quente:#E0664A; --c-engajado:#2BAF8E; --c-morno:#C99A3E; --c-frio:#5C6B85;
+    --sh:0 2px 20px rgba(0,0,0,.6); --sh-md:0 8px 40px rgba(0,0,0,.7); --sh-gold:0 0 30px rgba(212,175,55,.12);
+    --font-body:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif;
+    --font-mono:'Cascadia Code','SF Mono',Consolas,'Roboto Mono',monospace;
+    --font-display:'Bahnschrift','Segoe UI Semibold',Arial,sans-serif;
+  }
 
-:root {
-  --gold: #C9A84C;
-  --gold-light: #E2C97E;
-  --gold-dim: rgba(201,168,76,0.15);
-  --bg: #0d0d0d;
-  --bg2: #141414;
-  --white: #F5F0E8;
-  --gray: #7a7a7a;
-  --nav-h: 72px;
-}
+  *{box-sizing:border-box;}
+  html{background:var(--bg);}
+  body{
+    margin:0; background:var(--bg); color:var(--tx);
+    font-family:var(--font-body); font-size:16px; line-height:1.6;
+    -webkit-font-smoothing:antialiased; overflow-x:hidden; position:relative;
+  }
+  body::before{
+    content:''; position:fixed; inset:0;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+    opacity:.025; pointer-events:none; z-index:0;
+  }
+  body::after{
+    content:''; position:fixed; top:0; left:0; right:0; height:var(--stripe);
+    background:linear-gradient(90deg,#E11D48 0%,#D4AF37 35%,#D4AF37 65%,#004225 100%);
+    z-index:200;
+  }
+  h1,h2,h3{margin:0; text-wrap:balance; color:var(--tx); font-weight:700;}
+  p{margin:0;}
+  a{color:inherit;}
+  button{font:inherit;}
+  ::selection{background:var(--ac); color:#000;}
+  .mono{font-family:var(--font-mono);}
+  .num{font-family:var(--font-display); letter-spacing:-.02em;}
+  .prose{max-width:60ch;}
+  .container{max-width:1120px; margin:0 auto; padding-inline:clamp(1.25rem,1rem + 3vw,3rem); position:relative; z-index:1;}
 
-html { height: 100%; height: -webkit-fill-available; }
-body {
-  width: 100%; height: 100%; height: -webkit-fill-available;
-  background: var(--bg);
-  color: var(--white);
-  font-family: 'DM Sans', Georgia, sans-serif;
-  overflow: hidden;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-}
+  @media (prefers-reduced-motion: no-preference){
+    .reveal{opacity:0; transform:translateY(14px); transition:opacity .5s ease, transform .5s ease;}
+    .reveal.is-visible{opacity:1; transform:none;}
+    @keyframes blink{0%,100%{opacity:1;}50%{opacity:.4;}}
+  }
 
-/* ── DECK ── */
-#deck {
-  position: fixed;
-  inset: 0;
-  bottom: var(--nav-h);
-  overflow: hidden;
-}
+  /* ===== Topbar ===== */
+  .topbar{
+    position:sticky; top:0; z-index:100;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:calc(var(--stripe) + .9rem) clamp(1.25rem,1rem + 3vw,3rem) .9rem;
+    background:color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter:blur(10px); border-bottom:1px solid var(--bdr);
+  }
+  .brand{display:flex; align-items:baseline; gap:2px;}
+  .brand-mark{font-family:var(--font-display); font-weight:800; font-size:1.3rem; color:var(--tx); letter-spacing:.02em;}
+  .brand-mark span{color:var(--ac);}
+  .live-pill{display:inline-flex; align-items:center; gap:7px; background:var(--s2); border:1px solid var(--bdr); border-radius:20px; padding:5px 13px;}
+  .live-pill .dot{width:7px; height:7px; border-radius:50%; background:var(--grn-l); box-shadow:0 0 8px var(--grn-l); flex:none;}
+  @media (prefers-reduced-motion: no-preference){ .live-pill .dot{animation:blink 2.2s ease-in-out infinite;} }
+  .live-pill span{font-size:11px; color:var(--tx2); font-weight:500;}
+  .topbar-r{display:flex; align-items:center; gap:12px;}
 
-/* ── SLIDE BASE ── */
-.slide {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 48px 72px 32px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.45s ease;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-}
-.slide.active {
-  opacity: 1;
-  pointer-events: all;
-}
+  /* ===== Buttons ===== */
+  .btn-gold{
+    display:inline-flex; align-items:center; gap:8px; white-space:nowrap;
+    background:linear-gradient(135deg,var(--ac),var(--ac-d)); color:#000;
+    border:none; padding:12px 24px; border-radius:var(--rsm);
+    font-size:14px; font-weight:700; cursor:pointer; text-decoration:none;
+    box-shadow:0 4px 16px rgba(212,175,55,.25);
+    transition:all .2s ease;
+  }
+  .btn-gold:hover{background:linear-gradient(135deg,var(--ac-l),var(--ac)); transform:translateY(-2px); box-shadow:0 6px 24px rgba(212,175,55,.45);}
+  .btn-gold.sm{padding:9px 16px; font-size:12.5px;}
+  .text-link{font-size:13.5px; color:var(--tx2); text-decoration:underline; text-underline-offset:3px; background:none; border:none; cursor:pointer; padding:0; font-family:inherit;}
+  .text-link:hover{color:var(--tx);}
 
-/* ── ANIMATIONS ── */
-.slide.active .reveal { animation: up 0.65s cubic-bezier(0.16,1,0.3,1) both; }
-.slide.active .d1 { animation-delay: 0.08s; }
-.slide.active .d2 { animation-delay: 0.18s; }
-.slide.active .d3 { animation-delay: 0.28s; }
-.slide.active .d4 { animation-delay: 0.38s; }
-.slide.active .d5 { animation-delay: 0.46s; }
-@keyframes up {
-  from { opacity:0; transform:translateY(22px); }
-  to   { opacity:1; transform:translateY(0); }
-}
+  /* ===== Section label (padrão .sec do painel real) ===== */
+  .sec{font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--tx3); display:flex; align-items:center; gap:12px; font-weight:600; margin-bottom:14px;}
+  .sec::before{content:''; width:20px; height:2px; background:linear-gradient(90deg,var(--ac),transparent); flex:none;}
+  .sec::after{content:''; flex:1; height:1px; background:linear-gradient(90deg,var(--bdr),transparent);}
+  .section-head{margin-bottom:clamp(1.75rem,1.3rem + 2vw,2.75rem);}
+  .section-head h2{font-size:clamp(1.5rem,1.3rem + 1.2vw,2.1rem); letter-spacing:-.03em; margin-bottom:.8rem;}
+  .section-head p{color:var(--tx2); font-size:1rem;}
+  section{padding-block:clamp(2.75rem,2.1rem + 3.5vw,5.5rem); position:relative; z-index:1;}
+  .grad-text{background:linear-gradient(135deg,#fff 0%,var(--ac-l) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;}
 
-/* ── NOISE ── */
-body::after {
-  content:'';
-  position:fixed; inset:0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-  pointer-events:none; z-index:9999; opacity:0.35;
-}
+  /* ===== Hero ===== */
+  .hero{padding-block:clamp(3rem,2.3rem + 5vw,6rem) clamp(2.5rem,2rem + 3vw,4rem);}
+  .hero-inner{display:grid; gap:clamp(2rem,1.5rem + 2vw,3rem);}
+  @media (min-width: 860px){ .hero-inner{grid-template-columns:1.15fr 1fr; align-items:center;} }
+  .hero h1{font-size:clamp(2rem,1.5rem + 2.6vw,3.2rem); line-height:1.08; letter-spacing:-.03em;}
+  .hero-lede{font-size:clamp(1rem,.95rem + .5vw,1.15rem); color:var(--tx2); margin-top:1.1rem; max-width:50ch;}
+  .hero-cta{display:flex; flex-wrap:wrap; gap:1rem; margin-top:1.9rem; align-items:center;}
 
-/* ── TYPOGRAPHY ── */
-.label {
-  font-size: clamp(9px, 1.8vw, 11px);
-  letter-spacing: 4px;
-  text-transform: uppercase;
-  color: var(--gold);
-  font-weight: 500;
-  margin-bottom: 16px;
-  flex-shrink: 0;
-}
-h1 {
-  font-family: 'Cormorant Garamond', Georgia, serif;
-  font-size: clamp(2rem, 5.5vw, 4rem);
-  font-weight: 300;
-  line-height: 1.18;
-  color: var(--white);
-  max-width: 800px;
-  text-align: center;
-  flex-shrink: 0;
-}
-h2 {
-  font-family: 'Cormorant Garamond', Georgia, serif;
-  font-size: clamp(1.5rem, 3.8vw, 2.8rem);
-  font-weight: 300;
-  line-height: 1.22;
-  color: var(--white);
-  text-align: center;
-  max-width: 680px;
-  flex-shrink: 0;
-}
-h1 em, h2 em { font-style: italic; color: var(--gold-light); }
-.impact {
-  font-family: 'Archivo Black', 'DM Sans', sans-serif;
-  font-style: normal;
-  text-transform: uppercase;
-  color: var(--gold-light);
-  letter-spacing: 0.01em;
-  font-size: 1.05em;
-}
+  .console{background:var(--surface); border:1px solid var(--bdr); border-radius:var(--r); box-shadow:var(--sh); padding:1.2rem 1.35rem; max-width:560px;}
+  .console-row{display:flex; gap:.85rem; padding:.45rem 0; font-size:13px;}
+  .console-row + .console-row{border-top:1px dashed var(--bdr);}
+  .console-time{color:var(--tx3); flex:none; width:3.6em;}
+  .console-text{color:var(--tx2);}
+  .console-text b{color:var(--tx); font-weight:600;}
+  .console-caption{font-size:11.5px; color:var(--tx3); margin-top:.8rem;}
 
-p.sub {
-  font-size: clamp(12px, 1.8vw, 14px);
-  color: var(--gray);
-  margin-top: 14px;
-  line-height: 1.65;
-  text-align: center;
-  max-width: 500px;
-  flex-shrink: 0;
-}
+  /* ===== Score pill (idêntico ao .sp/.sh do painel) ===== */
+  .sp{display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; font-family:var(--font-mono);}
+  .sp.sh{background:rgba(212,175,55,.1); color:var(--ac); border:1px solid rgba(212,175,55,.2);}
 
-/* ── NAV BAR ── */
-#nav {
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  height: var(--nav-h);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
-  background: rgba(13,13,13,0.92);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-top: 1px solid rgba(201,168,76,0.1);
-  z-index: 1000;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-.nav-btn {
-  width: 48px; height: 48px;
-  border: 1px solid rgba(201,168,76,0.28);
-  background: rgba(201,168,76,0.04);
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  color: var(--gold);
-  font-size: 18px;
-  touch-action: manipulation;
-}
-.nav-btn:hover, .nav-btn:focus { border-color: var(--gold); background: var(--gold-dim); outline: none; }
-.nav-btn:active { transform: scale(0.93); }
-.nav-btn:disabled { opacity: 0.18; pointer-events: none; }
+  /* ===== Cards genéricos ===== */
+  .card{background:var(--surface); border-radius:var(--r); border:1px solid var(--bdr); box-shadow:var(--sh); padding:1.5rem; transition:all .25s;}
+  .card:hover{border-color:var(--s4); transform:translateY(-1px); box-shadow:var(--sh-md);}
+  .g2{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
+  @media (max-width: 720px){ .g2{grid-template-columns:1fr;} }
 
-#counter {
-  font-size: 11px;
-  letter-spacing: 3px;
-  color: var(--gray);
-  min-width: 40px;
-  text-align: center;
-}
+  .tag-mini{font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--ac); font-weight:700; margin-bottom:8px; display:block;}
+  .card p.body-txt{color:var(--tx2); font-size:14.5px; line-height:1.55;}
 
-/* dots */
-#dots {
-  display: flex; gap: 6px; align-items: center;
-}
-.dot {
-  width: 5px; height: 5px;
-  border-radius: 50%;
-  background: rgba(201,168,76,0.25);
-  transition: all 0.3s;
-  cursor: pointer;
-}
-.dot.on {
-  background: var(--gold);
-  width: 18px;
-  border-radius: 3px;
-}
+  /* ===== Steps ===== */
+  .steps{display:grid; gap:1px; background:var(--bdr); border:1px solid var(--bdr); border-radius:var(--r); overflow:hidden;}
+  .step{background:var(--surface); padding:1.4rem clamp(1.1rem,1rem + 1vw,1.7rem); display:grid; grid-template-columns:3rem 1fr; gap:1.1rem; align-items:start;}
+  .step-index{font-family:var(--font-display); font-weight:700; color:var(--ac); font-size:22px; font-variant-numeric:tabular-nums;}
+  .step p{color:var(--tx2); font-size:14.5px; margin-top:.15rem;}
+  .step b{color:var(--tx); font-weight:600;}
 
-/* ── S1: CAPA ── */
-#s1 { background: var(--bg); }
-#s1::before {
-  content:'';
-  position:absolute;
-  top: 0; left:50%; transform:translateX(-50%);
-  width: min(600px, 100%); height: min(600px, 100%);
-  background: radial-gradient(ellipse at 50% 30%, rgba(201,168,76,0.07) 0%, transparent 65%);
-  pointer-events:none;
-}
-.badge {
-  display:flex; align-items:center; gap:10px;
-  margin-bottom: clamp(28px, 5vh, 48px);
-  flex-shrink:0;
-}
-.dot-pulse {
-  width:8px; height:8px; border-radius:50%;
-  background:var(--gold);
-  animation: pulse 2.4s ease-in-out infinite;
-}
-@keyframes pulse {
-  0%,100%{ opacity:1; transform:scale(1); }
-  50%{ opacity:0.35; transform:scale(1.5); }
-}
-.badge-name {
-  font-size: clamp(9px,1.8vw,11px);
-  letter-spacing: 5px;
-  text-transform: uppercase;
-  color: var(--gold);
-  font-weight: 500;
-}
+  /* ===== Feature grid (ícones reais do painel) ===== */
+  .feature-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:20px;}
+  @media (max-width: 720px){ .feature-grid{grid-template-columns:1fr;} }
+  .feature{background:var(--surface); border-radius:var(--r); border:1px solid var(--bdr); box-shadow:var(--sh); padding:1.5rem; transition:all .25s;}
+  .feature:hover{border-color:rgba(212,175,55,.2); box-shadow:var(--sh-gold),var(--sh-md); transform:translateY(-2px);}
+  .feature-ico{width:34px; height:34px; border-radius:9px; background:var(--ac-faint); border:1px solid rgba(212,175,55,.18); display:flex; align-items:center; justify-content:center; color:var(--ac); margin-bottom:14px;}
+  .feature h3{font-size:15.5px; font-weight:700; margin-bottom:6px; letter-spacing:-.01em;}
+  .feature p{color:var(--tx2); font-size:13.5px; line-height:1.55;}
 
-/* ── S2: DORES ── */
-#s2 { background: var(--bg2); justify-content: flex-start; padding-top: clamp(32px,5vh,56px); }
-.pain-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2px;
-  margin-top: clamp(20px,3vh,40px);
-  width: 100%;
-  max-width: 880px;
-  flex-shrink: 0;
-}
-.pain-card {
-  background: rgba(255,255,255,0.022);
-  border: 1px solid rgba(255,255,255,0.055);
-  padding: clamp(18px,2.5vw,30px) clamp(16px,2vw,26px);
-  position:relative; overflow:hidden;
-}
-.pain-card::before {
-  content:''; position:absolute; top:0; left:0;
-  width:100%; height:2px;
-  background:var(--gold); opacity:0.45;
-}
-.pain-num {
-  font-family:'Cormorant Garamond',Georgia,serif;
-  font-size: clamp(2rem,4vw,3rem);
-  font-weight:300;
-  color:rgba(201,168,76,0.14);
-  line-height:1;
-  margin-bottom: clamp(10px,1.5vh,16px);
-}
-.pain-title {
-  font-size: clamp(11px,1.5vw,13px);
-  font-weight:500; color:var(--white);
-  line-height:1.5; margin-bottom:8px;
-}
-.pain-desc {
-  font-size: clamp(10px,1.3vw,12px);
-  color:var(--gray); line-height:1.6;
-}
+  /* ===== KPI mockup (idêntico ao .kpi-grid/.kpi real) ===== */
+  .mock-frame{border:1px solid var(--bdr); border-radius:var(--r); background:var(--surface); box-shadow:var(--sh); overflow:hidden;}
+  .mock-bar{display:flex; align-items:center; justify-content:space-between; padding:.85rem 1.3rem; border-bottom:1px solid var(--bdr);}
+  .mock-bar .label{font-size:12px; color:var(--tx2); font-weight:600;}
+  .tag-example{font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--tx3); border:1px dashed var(--s4); border-radius:20px; padding:3px 10px; font-weight:600;}
+  .kpi-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--bdr); padding:1px;}
+  @media (max-width: 720px){ .kpi-grid{grid-template-columns:repeat(2,1fr);} }
+  .kpi{background:var(--surface); padding:1.4rem 1.3rem;}
+  .kpi-lbl{font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--tx3); margin-bottom:10px; font-weight:600;}
+  .kpi-val{font-family:var(--font-display); font-size:clamp(1.7rem,1.4rem + 1vw,2.2rem); font-weight:700; letter-spacing:-.02em; line-height:1; color:var(--tx); font-variant-numeric:tabular-nums;}
+  .kpi-val.gold{color:var(--ac);}
 
-/* ── S3: IMPACTO ── */
-#s3 { background:var(--bg); }
-.stat-block { text-align:center; margin: clamp(20px,3vh,40px) 0; flex-shrink:0; }
-.stat-num {
-  font-family:'Cormorant Garamond',Georgia,serif;
-  font-size: clamp(5rem,15vw,9rem);
-  font-weight:300; color:var(--gold);
-  line-height:1; letter-spacing:-2px;
-}
-.stat-label {
-  font-size: clamp(12px,1.8vw,14px);
-  color:var(--gray); letter-spacing:0.5px;
-  margin-top:12px; max-width:440px; line-height:1.65;
-}
-.stat-source {
-  font-size:10px; color:rgba(122,122,122,0.45);
-  margin-top:8px; letter-spacing:1px;
-}
+  /* ===== Barras de diagnóstico (cores reais: vermelho / dourado / azul) ===== */
+  .bar-row{display:grid; grid-template-columns:11rem 1fr 3.4rem; align-items:center; gap:.9rem; padding:.7rem 0;}
+  .bar-row + .bar-row{border-top:1px solid var(--bdr);}
+  .bar-label{font-size:13.5px; color:var(--tx2);}
+  .bar-track{height:8px; background:var(--s2); border-radius:20px; overflow:hidden;}
+  .bar-fill{height:100%; border-radius:20px;}
+  .bar-pct{font-family:var(--font-mono); font-size:13px; text-align:right; font-variant-numeric:tabular-nums;}
+  @media (max-width: 560px){ .bar-row{grid-template-columns:1fr; gap:.35rem;} .bar-pct{text-align:left;} }
 
-/* ── S4: RUI ── */
-#s4 { background:var(--bg2); }
-.rui-avatar {
-  width: clamp(56px,8vw,72px); height: clamp(56px,8vw,72px);
-  border-radius:50%;
-  border:1px solid rgba(201,168,76,0.38);
-  display:flex; align-items:center; justify-content:center;
-  margin-bottom: clamp(16px,2.5vh,28px);
-  position:relative;
-  background:radial-gradient(circle, rgba(201,168,76,0.09), transparent);
-  flex-shrink:0;
-}
-.rui-avatar::after {
-  content:''; position:absolute; inset:-7px;
-  border-radius:50%;
-  border:1px solid rgba(201,168,76,0.1);
-}
-.rui-icon { font-size: clamp(20px,3vw,28px); }
-.pillars {
-  display:flex; gap: clamp(16px,2.5vw,32px);
-  margin-top: clamp(20px,3vh,40px);
-  flex-wrap:wrap; justify-content:center;
-  max-width:820px; flex-shrink:0;
-}
-.pillar {
-  display:flex; flex-direction:column; align-items:center;
-  gap:10px; flex:1; min-width:140px; max-width:200px; text-align:center;
-}
-.pillar-icon {
-  width:38px; height:38px;
-  border:1px solid rgba(201,168,76,0.22); border-radius:8px;
-  display:flex; align-items:center; justify-content:center;
-  font-size:16px; flex-shrink:0;
-}
-.pillar-title { font-size: clamp(11px,1.5vw,13px); color:var(--white); font-weight:500; }
-.pillar-text  { font-size: clamp(10px,1.3vw,12px); color:var(--gray); line-height:1.6; }
+  /* ===== Chips (idêntico ao .filtro-cl-opt) ===== */
+  .chip-row{display:flex; flex-wrap:wrap; gap:8px; margin-top:1.4rem;}
+  .chip{background:var(--s2); color:var(--tx2); border:1px solid var(--bdr); border-radius:20px; padding:6px 14px; font-size:12.5px; font-weight:600;}
 
-/* ── S5: JORNADA ── */
-#s5 { background:var(--bg); }
-.journey {
-  display:flex; align-items:center; gap:0;
-  margin-top: clamp(20px,3.5vh,44px);
-  max-width:860px; width:100%; flex-shrink:0;
-}
-.journey-step {
-  flex:1; display:flex; flex-direction:column; align-items:center;
-  text-align:center; gap: clamp(8px,1.5vh,14px); padding:0 8px;
-}
-.step-circle {
-  width: clamp(42px,6vw,52px); height: clamp(42px,6vw,52px);
-  border-radius:50%;
-  border:1px solid rgba(201,168,76,0.28);
-  display:flex; align-items:center; justify-content:center;
-  font-size: clamp(16px,2.5vw,20px);
-  background:rgba(201,168,76,0.045);
-  position:relative; flex-shrink:0;
-}
-.step-num {
-  position:absolute; top:-7px; right:-7px;
-  width:17px; height:17px; border-radius:50%;
-  background:var(--gold); color:var(--bg);
-  font-size:9px; font-weight:700;
-  display:flex; align-items:center; justify-content:center;
-}
-.step-title { font-size: clamp(10px,1.5vw,12px); font-weight:500; color:var(--white); }
-.step-desc  { font-size: clamp(9px,1.3vw,11px); color:var(--gray); line-height:1.6; }
-.j-arrow {
-  color:rgba(201,168,76,0.28); font-size:18px;
-  flex-shrink:0; margin-bottom:28px;
-}
+  /* ===== Legenda de temperatura ===== */
+  .temp-legend{display:flex; flex-wrap:wrap; gap:14px; margin-top:1.1rem;}
+  .temp-item{display:flex; align-items:center; gap:7px; font-size:12px; color:var(--tx2);}
+  .temp-dot{width:9px; height:9px; border-radius:50%; flex:none;}
 
-/* ── S6: DASHBOARD ── */
-#s6 { background:var(--bg2); justify-content:flex-start; padding-top: clamp(28px,4.5vh,52px); }
-.dash-grid {
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap: clamp(8px,1.5vw,14px);
-  margin-top: clamp(16px,2.5vh,36px);
-  max-width:800px; width:100%; flex-shrink:0;
-}
-.dash-card {
-  border:1px solid rgba(201,168,76,0.1);
-  background:rgba(201,168,76,0.028);
-  padding: clamp(14px,2vw,22px) clamp(12px,1.8vw,18px);
-  border-radius:2px;
-  display:flex; flex-direction:column; gap:6px;
-}
-.dc-icon { font-size: clamp(16px,2.5vw,20px); }
-.dc-label {
-  font-size: clamp(8px,1.2vw,10px);
-  letter-spacing:2px; text-transform:uppercase;
-  color:var(--gold); margin-top:2px;
-}
-.dc-desc { font-size: clamp(10px,1.3vw,12px); color:var(--gray); line-height:1.5; }
-.dc-blur { font-size: clamp(10px,1.3vw,12px); color:rgba(122,122,122,0.28); font-style:italic; margin-top:2px; }
+  /* ===== KPI dourado (cta / destaque) ===== */
+  .kpi-gold-card{background:linear-gradient(145deg,#130F00,#0A0800); border:1px solid rgba(212,175,55,.25); border-radius:var(--r); padding:clamp(2rem,1.6rem + 2vw,3rem); box-shadow:var(--sh-md);}
+  .kpi-gold-card h2{font-size:clamp(1.6rem,1.35rem + 1.3vw,2.2rem); letter-spacing:-.03em; margin-bottom:.9rem;}
+  .kpi-gold-card p.body-txt{color:var(--tx2); max-width:46ch; margin-bottom:1.8rem; font-size:15px;}
+  .cta-note{font-size:11.5px; color:var(--tx3); margin-top:1rem; max-width:44ch;}
 
-/* ── S7: FINAL ── */
-#s7 { background:var(--bg); }
-#s7::before {
-  content:''; position:absolute;
-  bottom:0; left:50%; transform:translateX(-50%);
-  width:min(600px,100%); height:min(400px,50%);
-  background:radial-gradient(ellipse at bottom, rgba(201,168,76,0.07) 0%, transparent 65%);
-  pointer-events:none;
-}
-.cta-q {
-  font-family:'Cormorant Garamond',Georgia,serif;
-  font-size: clamp(1.5rem,3.5vw,2.5rem);
-  font-weight:300; color:var(--white);
-  text-align:center; max-width:580px; line-height:1.3;
-  margin-top:10px; flex-shrink:0;
-}
-.cta-line {
-  width:1px; height: clamp(36px,6vh,60px);
-  background:linear-gradient(to bottom, var(--gold), transparent);
-  margin: clamp(20px,3.5vh,36px) auto; flex-shrink:0;
-}
-.cta-sub {
-  font-size: clamp(10px,1.5vw,12px);
-  color:var(--gray); letter-spacing:2px; text-transform:uppercase;
-  flex-shrink:0;
-}
-.wa-cta {
-  display:inline-flex; align-items:center; gap:10px;
-  margin-top: clamp(26px,4.5vh,44px);
-  padding: 15px 34px;
-  background:var(--gold); color:var(--bg);
-  border:1px solid var(--gold); border-radius:2px;
-  font-family:'DM Sans',sans-serif;
-  font-size: clamp(13px,1.7vw,15px); font-weight:500; letter-spacing:0.5px;
-  text-decoration:none; transition:all 0.25s ease; flex-shrink:0;
-}
-.wa-cta:hover {
-  background:var(--gold-light); border-color:var(--gold-light);
-  transform:translateY(-2px); box-shadow:0 10px 28px rgba(201,168,76,0.28);
-}
-.wa-cta:active { transform:scale(0.97); }
-.wa-num {
-  font-size: clamp(11px,1.5vw,13px);
-  color:var(--gray); letter-spacing:1px;
-  margin-top:14px; flex-shrink:0;
-}
+  /* ===== Diferenciais ===== */
+  .diff-list{display:grid; gap:1px; background:var(--bdr); border:1px solid var(--bdr); border-radius:var(--r); overflow:hidden;}
+  .diff{background:var(--surface); padding:1.15rem clamp(1.1rem,1rem + 1vw,1.6rem); font-size:14.5px;}
+  .diff .no{color:var(--tx3);}
+  .diff .yes{color:var(--tx); font-weight:600; display:block; margin-top:.3rem;}
+  .diff .yes .hl{color:var(--ac);}
 
-/* ══════════════════════════════════════
-   MOBILE  ≤ 640px
-══════════════════════════════════════ */
-@media (max-width: 640px) {
-  :root { --nav-h: 66px; }
+  footer{padding:2rem clamp(1.25rem,1rem + 3vw,3rem) 3rem; color:var(--tx3); font-size:12px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:.5rem; position:relative; z-index:1;}
 
-  .slide { padding: 28px 20px 16px; justify-content: flex-start; }
-
-  /* S1 */
-  #s1 { justify-content: center; }
-  .badge { margin-bottom: 28px; }
-
-  /* S2: stack cards */
-  #s2 { padding-top: 28px; }
-  .pain-grid { grid-template-columns: 1fr; gap: 2px; margin-top: 16px; }
-  .pain-card { padding: 16px; }
-  .pain-num { font-size: 1.8rem; margin-bottom: 8px; }
-
-  /* S3 */
-  .stat-block { margin: 20px 0; }
-
-  /* S4: pillars side-by-side */
-  .pillars { flex-direction: row; gap: 10px; margin-top: 20px; }
-  .pillar { min-width: 0; gap: 6px; }
-  .pillar-icon { width: 32px; height: 32px; font-size: 14px; }
-
-  /* S5: vertical journey */
-  #s5 { justify-content: flex-start; padding-top: 28px; }
-  .journey { flex-direction: column; align-items: center; gap: 8px; margin-top: 16px; }
-  .journey-step { flex-direction: row; text-align: left; gap: 14px; width: 100%; max-width: 320px; padding: 0; }
-  .j-arrow { transform: rotate(90deg); margin: 0 auto; }
-  .step-desc { display: block; }
-
-  /* S6: 2-col grid */
-  #s6 { padding-top: 28px; }
-  .dash-grid { grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
-  .dash-card { padding: 12px 10px; }
-
-  /* S7 */
-  #s7 { justify-content: center; }
-}
-
-/* Tablets 641–900 */
-@media (min-width: 641px) and (max-width: 900px) {
-  .slide { padding: 40px 44px 28px; }
-  .pain-grid { grid-template-columns: 1fr; gap: 2px; }
-  .journey { gap: 0; }
-  .dash-grid { grid-template-columns: repeat(2, 1fr); }
-  .step-desc { font-size: 10px; }
-}
-
-/* Portrait phone: extra compact */
-@media (max-height: 700px) and (max-width: 640px) {
-  .pain-num { display: none; }
-  .rui-avatar { width: 48px; height: 48px; margin-bottom: 12px; }
-  .badge { margin-bottom: 20px; }
-  .pillar-text { display: none; }
-  .step-desc { display: none; }
-}
+  @keyframes fadeUp{from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);}}
 </style>
 </head>
 <body>
-
-<div id="deck">
-
-  <!-- S1: CAPA -->
-  <div class="slide active" id="s1">
-    <div class="badge reveal">
-      <div class="dot-pulse"></div>
-      <span class="badge-name">Rui · Agente de IA</span>
-    </div>
-    <h1 class="reveal d1">
-      Muitos leads têm tempo livre para comprar<br>
-      fora do <span class="impact">horário comercial</span>.<br>
-      <em>Alguém está atendendo ele?</em>
-    </h1>
-    <p class="sub reveal d2">Uma conversa sobre o que está custando sua loja em silêncio.</p>
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">R<span>UI</span></span>
   </div>
-
-  <!-- S2: DORES -->
-  <div class="slide" id="s2">
-    <div class="label reveal">A Realidade das Lojas de Carros</div>
-    <h2 class="reveal d1">Três problemas que<br><em>custam vendas todo dia</em></h2>
-    <div class="pain-grid">
-      <div class="pain-card reveal d2">
-        <div class="pain-num">01</div>
-        <div class="pain-title">Lead sem resposta rápida é lead perdido</div>
-        <div class="pain-desc">O cliente não espera. Enquanto você não responde, o concorrente já está no WhatsApp dele.</div>
-      </div>
-      <div class="pain-card reveal d3">
-        <div class="pain-num">02</div>
-        <div class="pain-title">Seus vendedores tratam leads quentes e frios igualmente</div>
-        <div class="pain-desc">Um lead pronto pra comprar espera na mesma fila de um curioso. Ele esfria — e compra de quem responder primeiro.</div>
-      </div>
-      <div class="pain-card reveal d4">
-        <div class="pain-num">03</div>
-        <div class="pain-title">A equipe sem visibilidade não performa</div>
-        <div class="pain-desc">Sem dados, o gerente gerencia no feeling. E o vendedor mais lento fica invisível.</div>
-      </div>
-    </div>
+  <div class="topbar-r">
+    <span class="live-pill"><span class="dot" aria-hidden="true"></span><span class="mono">ativo 24/7</span></span>
+    <a class="btn-gold sm" href="#tour">Ver o painel ↓</a>
   </div>
+</header>
 
-  <!-- S3: IMPACTO -->
-  <div class="slide" id="s3">
-    <div class="label reveal">O Custo do Silêncio</div>
-    <div class="stat-block reveal d1">
-      <div class="stat-num">78%</div>
-      <div class="stat-label">dos compradores fecham com a primeira empresa que responde de forma relevante ao seu contato.</div>
-      <div class="stat-source">Lead Response Management Study</div>
-    </div>
-    <h2 class="reveal d2">E se o primeiro a responder<br><em>fosse sempre a sua loja?</em></h2>
-  </div>
+<main>
+  <section class="hero">
+    <div class="container hero-inner">
+      <div class="reveal">
+        <p class="sec" style="margin-bottom:1rem;">Agente de IA · WhatsApp · Concessionárias</p>
+        <h1 class="grad-text">Seu próximo cliente chama no WhatsApp às 2h da manhã.</h1>
+        <p class="hero-lede">Antes de você abrir a loja, o Rui já respondeu, qualificou e organizou esse lead na fila certa. Todos os dias, inclusive quando não tem ninguém de plantão.</p>
+        <div class="hero-cta">
+          <a class="btn-gold" href="#tour">Ver o painel por dentro ↓</a>
+          <button class="text-link" onclick="document.getElementById('problema').scrollIntoView({behavior:'smooth'})">Já uso WhatsApp, por que preciso disso?</button>
+        </div>
+      </div>
 
-  <!-- S4: RUI -->
-  <div class="slide" id="s4">
-    <div class="rui-avatar reveal">
-      <span class="rui-icon">◈</span>
-    </div>
-    <div class="label reveal d1">Conheça o Rui</div>
-    <h2 class="reveal d2">O primeiro funcionário da sua loja<br>que <em>nunca dorme</em></h2>
-    <div class="pillars">
-      <div class="pillar reveal d2">
-        <div class="pillar-icon">⏱</div>
-        <div class="pillar-title">Atende 24h por dia 7 dias por semana</div>
-        <div class="pillar-text">Qualifica cada lead no momento exato em que ele chega — madrugada, feriado, fim de semana.</div>
-      </div>
-      <div class="pillar reveal d3">
-        <div class="pillar-icon">🎯</div>
-        <div class="pillar-title">Identifica quem compra</div>
-        <div class="pillar-text">Qualifica leads para diferenciar leads quentes dos frios e permitir que a sua equipe os 'esquente'.</div>
-      </div>
-      <div class="pillar reveal d4">
-        <div class="pillar-icon">📊</div>
-        <div class="pillar-title">Diagnostica porque leads esfriaram</div>
-        <div class="pillar-text">Aponta a causa exata — preço, falta de estoque ou demora no atendimento.</div>
+      <div class="console reveal">
+        <div class="console-row"><span class="console-time mono">02:14</span><span class="console-text">lead recebido — <b>"quero saber sobre o Tank 300, tem pra pronta entrega?"</b></span></div>
+        <div class="console-row"><span class="console-time mono">02:14</span><span class="console-text">Rui iniciou a qualificação</span></div>
+        <div class="console-row"><span class="console-time mono">02:15</span><span class="console-text"><span class="sp sh">78 · Quente</span>&nbsp; entrou na fila com prioridade</span></div>
+        <div class="console-row"><span class="console-time mono">08:03</span><span class="console-text">vendedor assumiu a conversa, contexto completo</span></div>
+        <p class="console-caption">Exemplo de como um atendimento fica registrado no painel — ilustrativo, não é uma conversa real.</p>
       </div>
     </div>
-  </div>
+  </section>
 
-  <!-- S5: COMO FUNCIONA -->
-  <div class="slide" id="s5">
-    <div class="label reveal">Como Funciona na Prática</div>
-    <h2 class="reveal d1">Da mensagem ao negócio.<br><em>Sem ruído.</em></h2>
-    <div class="journey">
-      <div class="journey-step reveal d2">
-        <div class="step-circle">
-          <span>📲</span>
-          <div class="step-num">1</div>
-        </div>
-        <div>
-          <div class="step-title">Lead chega</div>
-          <div class="step-desc">Cliente manda mensagem pelo Instagram às 22h sobre um carro.</div>
-        </div>
+  <section id="problema">
+    <div class="container">
+      <div class="section-head reveal">
+        <p class="sec">O que acontece hoje, sem o Rui</p>
+        <h2>Todo lead parado é uma venda esfriando.</h2>
       </div>
-      <div class="j-arrow reveal d2">›</div>
-      <div class="journey-step reveal d3">
-        <div class="step-circle">
-          <span>🤖</span>
-          <div class="step-num">2</div>
-        </div>
-        <div>
-          <div class="step-title">Rui qualifica</div>
-          <div class="step-desc">Em segundos classifica a temperatura e coleta o essencial.</div>
-        </div>
+      <div class="g2 reveal">
+        <div class="card"><span class="tag-mini">22h47</span><p class="body-txt">Um lead manda mensagem depois do expediente. A resposta só vem no dia seguinte — se vier. Ele já pode ter comprado em outro lugar.</p></div>
+        <div class="card"><span class="tag-mini">Qualificação</span><p class="body-txt">Dois leads chegam juntos: um só curioso, outro pronto pra fechar. Sem prioridade, os dois esperam o mesmo tempo — e o que estava pronto esfria.</p></div>
+        <div class="card"><span class="tag-mini">Diagnostica</span><p class="body-txt">Um lead some no meio da conversa. Ninguém sabe se foi preço, prazo de entrega ou falta de retorno — o mesmo erro se repete no mês seguinte.</p></div>
+        <div class="card"><span class="tag-mini">2 sistemas</span><p class="body-txt">O WhatsApp registra uma coisa, o balcão da loja registra outra. O gestor nunca vê os dois lados do funil juntos.</p></div>
+        <div class="card"><span class="tag-mini">Fila de espera</span><p class="body-txt">Quando um modelo está sem estoque, o Rui monta uma fila de espera com quem tem interesse nele — pronta pra acionar assim que o carro chegar.</p></div>
+        <div class="card"><span class="tag-mini">4 idiomas</span><p class="body-txt">O Rui atende em português, inglês, espanhol e mandarim — sem perder o cliente que não fala português.</p></div>
       </div>
-      <div class="j-arrow reveal d3">›</div>
-      <div class="journey-step reveal d4">
-        <div class="step-circle">
-          <span>🔥</span>
-          <div class="step-num">3</div>
-        </div>
-        <div>
-          <div class="step-title">Lead quente entregue</div>
-          <div class="step-desc">O vendedor certo recebe o lead já qualificado para fechar.</div>
-        </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="section-head reveal">
+        <p class="sec">Como o Rui trabalha</p>
+        <h2>Da primeira mensagem até o vendedor certo.</h2>
       </div>
-      <div class="j-arrow reveal d4">›</div>
-      <div class="journey-step reveal d5">
-        <div class="step-circle">
-          <span>✅</span>
-          <div class="step-num">4</div>
+      <div class="steps reveal">
+        <div class="step"><span class="step-index num">01</span><p><b>Mensagem chega</b> no WhatsApp da loja, a qualquer hora — inclusive de madrugada, domingo ou feriado.</p></div>
+        <div class="step"><span class="step-index num">02</span><p><b>Rui conversa e qualifica:</b> entende a necessidade e calcula um score de 0 a 100 (intenção, capacidade financeira, urgência, decisor, objeção).</p></div>
+        <div class="step"><span class="step-index num">03</span><p><b>O lead entra na fila</b> com prioridade por temperatura e tempo de espera — nunca por simples ordem de chegada.</p></div>
+        <div class="step"><span class="step-index num">04</span><p><b>Rui transfere</b> para o vendedor certo, já com o contexto da conversa resumido.</p></div>
+        <div class="step"><span class="step-index num">05</span><p><b>Tudo fica registrado</b> num painel só — WhatsApp e atendimento presencial, juntos.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tour">
+    <div class="container">
+      <div class="section-head reveal">
+        <p class="sec">O que você vê do outro lado</p>
+        <h2>Um painel de controle pra tudo que o Rui faz.</h2>
+        <p class="prose">As mesmas 8 telas que a equipe usa todos os dias — os ícones abaixo são os mesmos do menu real do painel.</p>
+      </div>
+      <div class="feature-grid reveal">
+        <div class="feature">
+          <div class="feature-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></div>
+          <h3>Painel de Controle</h3>
+          <p>Quantos leads chegaram, quantos o Rui qualificou e o tamanho da fila de espera — atualizado a cada 30 segundos.</p>
         </div>
-        <div>
-          <div class="step-title">Esquenta leads frios</div>
-          <div class="step-desc">Rui reengaja quem esfriou, com uma nova mensagem no momento certo.</div>
+        <div class="feature">
+          <div class="feature-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+          <h3>Fila de Espera</h3>
+          <p>Prioridade calculada por temperatura do lead e tempo de espera — não por simples ordem de chegada.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+          <h3>Central de Leads</h3>
+          <p>Todos os leads qualificados, filtrados por modelo, loja e temperatura — do frio ao Premium.</p>
+          <div class="temp-legend">
+            <span class="temp-item"><span class="temp-dot" style="background:var(--c-frio)"></span>Frio</span>
+            <span class="temp-item"><span class="temp-dot" style="background:var(--c-morno)"></span>Morno</span>
+            <span class="temp-item"><span class="temp-dot" style="background:var(--c-engajado)"></span>Engajado</span>
+            <span class="temp-item"><span class="temp-dot" style="background:var(--c-quente)"></span>Quente</span>
+            <span class="temp-item"><span class="temp-dot" style="background:var(--c-premium)"></span>Premium</span>
+          </div>
+        </div>
+        <div class="feature">
+          <div class="feature-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></div>
+          <h3>Cobertura 24/7</h3>
+          <p>Quanto do atendimento acontece fora do horário comercial — e qual carteira potencial isso representa.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h18l-7 8.5V19l-4 2v-8.5z"/></svg></div>
+          <h3>Funil de Qualificação</h3>
+          <p>Cada etapa mostra quem avançou e quem parou, com nome e canal de origem.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h3.5l2-7 4 14 2-7H21"/></svg></div>
+          <h3>Diagnóstico de Leads Esfriados</h3>
+          <p>Quando um lead esfria, uma IA analisa a conversa inteira e aponta a causa: gestão do lead, produto/estoque ou processo comercial.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><path d="m9 13.5 2 2 4-4.5"/></svg></div>
+          <h3>Check-in de Atendimento</h3>
+          <p>O vendedor registra o atendimento presencial no mesmo painel — mesmo cliente, mesmo histórico.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"/><path d="M16 2.5v4M8 2.5v4M3 10h18"/></svg></div>
+          <h3>Agenda de Visitas &amp; Test Drives</h3>
+          <span class="tag-example" style="display:inline-block; margin-bottom:8px;">em construção</span>
+          <p>Visitas e test drives organizados por loja e data, num só calendário — funcionalidade ainda em construção.</p>
         </div>
       </div>
     </div>
-  </div>
+  </section>
 
-  <!-- S6: DASHBOARD -->
-  <div class="slide" id="s6">
-    <div class="label reveal">Dashboard de Performance</div>
-    <h2 class="reveal d1">Você passa a enxergar<br>o que antes era <em>invisível</em></h2>
-    <div class="dash-grid">
-      <div class="dash-card reveal d2">
-        <span class="dc-icon">🌡</span>
-        <div class="dc-label">Temperatura</div>
-        <div class="dc-desc">Cada lead classificado por nível de intenção de compra.</div>
+  <section>
+    <div class="container">
+      <div class="section-head reveal">
+        <p class="sec" style="color:var(--tx2);">Exemplo ilustrativo — não são dados reais</p>
+        <h2>É mais ou menos assim que fica o seu painel.</h2>
+        <p class="prose">Os números abaixo são só pra mostrar o formato. Sua loja tem o próprio ritmo — esses dados passam a ser os seus a partir do primeiro lead atendido.</p>
       </div>
-      <div class="dash-card reveal d2">
-        <span class="dc-icon">🕐</span>
-        <div class="dc-label">Atendimento 24h</div>
-        <div class="dc-desc">Quanto da sua demanda chega fora do horário comercial.</div>
+
+      <div class="mock-frame reveal">
+        <div class="mock-bar"><span class="label">Painel de Controle · semana atual</span><span class="tag-example">exemplo</span></div>
+        <div class="kpi-grid">
+          <div class="kpi"><p class="kpi-lbl">Leads recebidos</p><p class="kpi-val num">146</p></div>
+          <div class="kpi"><p class="kpi-lbl">Rui qualificou</p><p class="kpi-val gold num">63%</p></div>
+          <div class="kpi"><p class="kpi-lbl">Fila de espera</p><p class="kpi-val num">12</p></div>
+          <div class="kpi"><p class="kpi-lbl">Score médio</p><p class="kpi-val num">58</p></div>
+        </div>
       </div>
-      <div class="dash-card reveal d2">
-        <span class="dc-icon">🚗</span>
-        <div class="dc-label">Fila de Espera por Modelo Específico</div>
-        <div class="dc-desc">Quem está esperando por cada modelo, pronto pra acionar quando chegar.</div>
-      </div>
-      <div class="dash-card reveal d3" style="border-color:rgba(201,168,76,0.22);background:rgba(201,168,76,0.048);">
-        <span class="dc-icon">👁</span>
-        <div class="dc-label" style="color:var(--gold-light)">Visibilidade Total</div>
-        <div class="dc-desc">Decisões baseadas em dados reais da sua operação.</div>
-      </div>
-      <div class="dash-card reveal d3">
-        <span class="dc-icon">🔒</span>
-        <div class="dc-label">E muito mais...</div>
-        <div class="dc-blur">Dados que só fazem sentido quando você vê ao vivo.</div>
+
+      <div style="height:1.5rem;"></div>
+
+      <div class="mock-frame reveal">
+        <div class="mock-bar"><span class="label">Diagnóstico de Leads Esfriados · responsabilidade por área</span><span class="tag-example">exemplo</span></div>
+        <div style="padding:1.4rem clamp(1.1rem,1rem + 1vw,1.7rem);">
+          <div class="bar-row">
+            <span class="bar-label">Produto / Estoque</span>
+            <div class="bar-track"><div class="bar-fill" style="width:49%;background:var(--ac);"></div></div>
+            <span class="bar-pct" style="color:var(--ac);">49%</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label">Gestão do Lead</span>
+            <div class="bar-track"><div class="bar-fill" style="width:35%;background:var(--red);"></div></div>
+            <span class="bar-pct" style="color:var(--red);">35%</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label">Processo Comercial</span>
+            <div class="bar-track"><div class="bar-fill" style="width:16%;background:var(--blue);"></div></div>
+            <span class="bar-pct" style="color:var(--blue);">16%</span>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
+  </section>
 
-  <!-- S7: FINAL -->
-  <div class="slide" id="s7">
-    <div class="label reveal">Próximo Passo</div>
-    <p class="cta-q reveal d1">
-      Quer ver o Rui funcionando<br>dentro da sua operação?
-    </p>
-    <div class="cta-line reveal d2"></div>
-    <p class="cta-sub reveal d3">Uma demonstração. Sem compromisso.</p>
-    <a class="wa-cta reveal d4" href="https://wa.me/5581995090483" target="_blank" rel="noopener">
-      <span>💬</span> Falar no WhatsApp
-    </a>
-    <p class="wa-num reveal d4">(81) 99509-0483</p>
-  </div>
+  <section>
+    <div class="container">
+      <div class="section-head reveal">
+        <p class="sec">Por que não é só mais um chatbot</p>
+        <h2>A diferença aparece no dia a dia.</h2>
+      </div>
+      <div class="diff-list reveal">
+        <div class="diff"><span class="no">Chatbot comum responde perguntas prontas.</span><span class="yes">Rui <span class="hl">qualifica, pontua e decide prioridade</span> de cada lead.</span></div>
+        <div class="diff"><span class="no">Chatbot comum só trabalha quando alguém liga ele.</span><span class="yes">Rui <span class="hl">não tira folga</span> — nem de madrugada, nem em feriado.</span></div>
+        <div class="diff"><span class="no">Chatbot comum esquece o lead que não respondeu.</span><span class="yes">Rui <span class="hl">investiga por que o lead esfriou</span> e aponta a causa.</span></div>
+        <div class="diff"><span class="no">Chatbot comum só existe dentro do WhatsApp.</span><span class="yes">Rui <span class="hl">une WhatsApp e balcão da loja</span> no mesmo painel.</span></div>
+      </div>
+    </div>
+  </section>
 
-</div><!-- /deck -->
+  <section>
+    <div class="container">
+      <div class="kpi-gold-card reveal">
+        <h2 class="grad-text">Quer ver o Rui rodando na sua loja?</h2>
+        <p class="body-txt">Marco uma demonstração e mostro o painel ao vivo, com os filtros configurados pra sua própria rede de lojas.</p>
+        <a class="btn-gold" href="https://wa.me/5581995090483" target="_blank" rel="noopener">Falar sobre o Rui</a>
+      </div>
+    </div>
+  </section>
+</main>
 
-<!-- NAVIGATION -->
-<nav id="nav">
-  <button class="nav-btn" id="prev" aria-label="Anterior" disabled>‹</button>
-  <div id="dots"></div>
-  <button class="nav-btn" id="next" aria-label="Próximo">›</button>
-</nav>
+<footer>
+  <span>Rui — agente de IA para concessionárias</span>
+  <span class="mono">painel de demonstração comercial</span>
+</footer>
 
 <script>
-(function(){
-  const slides = document.querySelectorAll('.slide');
-  const N = slides.length;
-  let cur = 0;
-
-  const prevBtn = document.getElementById('prev');
-  const nextBtn = document.getElementById('next');
-  const dotsEl  = document.getElementById('dots');
-
-  // build dots
-  const dotEls = Array.from({length: N}, (_, i) => {
-    const d = document.createElement('div');
-    d.className = 'dot' + (i===0 ? ' on' : '');
-    d.addEventListener('click', () => goTo(i));
-    dotsEl.appendChild(d);
-    return d;
-  });
-
-  function goTo(n) {
-    if (n < 0 || n >= N) return;
-    slides[cur].classList.remove('active');
-    dotEls[cur].classList.remove('on');
-    cur = n;
-    slides[cur].classList.add('active');
-    slides[cur].scrollTop = 0;
-    dotEls[cur].classList.add('on');
-    prevBtn.disabled = cur === 0;
-    nextBtn.disabled = cur === N - 1;
-  }
-
-  prevBtn.addEventListener('click', () => goTo(cur - 1));
-  nextBtn.addEventListener('click', () => goTo(cur + 1));
-
-  // keyboard
-  document.addEventListener('keydown', e => {
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown'  || e.key === ' ') { e.preventDefault(); goTo(cur+1); }
-    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')                     { e.preventDefault(); goTo(cur-1); }
-  });
-
-  // swipe / touch
-  let tx = 0, ty = 0;
-  document.addEventListener('touchstart', e => {
-    tx = e.touches[0].clientX;
-    ty = e.touches[0].clientY;
-  }, {passive:true});
-  document.addEventListener('touchend', e => {
-    const dx = e.changedTouches[0].clientX - tx;
-    const dy = e.changedTouches[0].clientY - ty;
-    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 44) {
-      dx < 0 ? goTo(cur+1) : goTo(cur-1);
+  (function(){
+    var els = document.querySelectorAll('.reveal');
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      els.forEach(function(el){ el.classList.add('is-visible'); });
+      return;
     }
-  }, {passive:true});
-})();
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting) { entry.target.classList.add('is-visible'); io.unobserve(entry.target); }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+    els.forEach(function(el){ io.observe(el); });
+  })();
 </script>
 </body>
 </html>
